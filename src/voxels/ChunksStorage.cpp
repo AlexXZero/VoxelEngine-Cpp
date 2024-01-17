@@ -94,19 +94,19 @@ void ChunksStorage::getVoxels(VoxelsVolume* volume, bool backlight) const {
 	int cw = ecx - scx + 1;
 	int ch = ecz - scz + 1;
 
+auto start_time = std::chrono::high_resolution_clock::now();
 	// cw*ch chunks will be scanned
 	for (int cz = scz; cz < scz + ch; cz++) {
 		for (int cx = scx; cx < scx + cw; cx++) {
+			int ly_max = y + h;
+			int lz_max = min(z + d, (cz + 1) * CHUNK_D);
+			int lx_max = min(x + w, (cx + 1) * CHUNK_W);
 			auto found = chunksMap.find(glm::ivec2(cx, cz));
 			if (found == chunksMap.end()) {
 				// no chunk loaded -> filling with BLOCK_VOID
-				for (int ly = y; ly < y + h; ly++) {
-					for (int lz = max(z, cz * CHUNK_D);
-						lz < min(z + d, (cz + 1) * CHUNK_D);
-						lz++) {
-						for (int lx = max(x, cx * CHUNK_W);
-							lx < min(x + w, (cx + 1) * CHUNK_W);
-							lx++) {
+				for (int ly = y; ly < ly_max; ly++) {
+					for (int lz = max(z, cz * CHUNK_D); lz < lz_max; lz++) {
+						for (int lx = max(x, cx * CHUNK_W); lx < lx_max; lx++) {
 							uint idx = vox_index(lx - x, ly - y, lz - z, w, d);
 							voxels[idx].id = BLOCK_VOID;
 							lights[idx] = 0;
@@ -114,18 +114,14 @@ void ChunksStorage::getVoxels(VoxelsVolume* volume, bool backlight) const {
 					}
 				}
 			} else {
-				const std::shared_ptr<Chunk>& chunk = found->second;
-				const voxel* cvoxels = chunk->voxels;
-				const light_t* clights = chunk->lightmap->getLights();
-				for (int ly = y; ly < y + h; ly++) {
-					for (int lz = max(z, cz * CHUNK_D);
-						lz < min(z + d, (cz + 1) * CHUNK_D);
-						lz++) {
-						for (int lx = max(x, cx * CHUNK_W);
-							lx < min(x + w, (cx + 1) * CHUNK_W);
-							lx++) {
+				const Chunk& chunk = *found->second;
+				const voxel* cvoxels = chunk.voxels;
+				const light_t* clights = chunk.lightmap->getLights();
+				for (int ly = y; ly < ly_max; ly++) {
+					for (int lz = max(z, cz * CHUNK_D); lz < lz_max; lz++) {
+						for (int lx = max(x, cx * CHUNK_W); lx < lx_max; lx++) {
 							uint vidx = vox_index(lx - x, ly - y, lz - z, w, d);
-							uint cidx = vox_index(lx - cx * CHUNK_W, ly, 
+							uint cidx = vox_index(lx - cx * CHUNK_W, ly,
 										lz - cz * CHUNK_D, CHUNK_W, CHUNK_D);
 							voxels[vidx] = cvoxels[cidx];
 							light_t light = clights[cidx];
@@ -147,4 +143,7 @@ void ChunksStorage::getVoxels(VoxelsVolume* volume, bool backlight) const {
 			}
 		}
 	}
+auto end_time = std::chrono::high_resolution_clock::now();
+auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+std::cerr << "Execution time: " << duration.count() << " microseconds" << std::endl;
 }

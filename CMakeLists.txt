@@ -38,7 +38,7 @@ if(MSVC)
     endif()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /source-charset:UTF-8")
 else()
-  target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -lstdc++fs
+  target_compile_options(${PROJECT_NAME} PRIVATE -O2 -pg -Wall -Wextra -lstdc++fs
     # additional warnings
     -Wformat-nonliteral -Wcast-align
     -Wpointer-arith -Wundef
@@ -71,7 +71,7 @@ if(UNIX)
 endif()
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-pie")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-pie -O2 -pg")
 endif()
 
 include_directories(${LUA_INCLUDE_DIR})
